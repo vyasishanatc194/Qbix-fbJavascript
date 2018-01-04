@@ -1,5 +1,5 @@
 var intervalForScroll = '';
-var liObj = document.querySelectorAll("._698");
+var liObj = document.querySelectorAll('._698');
 var liLength = liObj.length;
 var scrollTime = 1;
 var fbFriendLogIn = new Array();
@@ -8,7 +8,7 @@ var getScroll = function(){
 	window.scrollTo(0,document.body.scrollHeight);
 	var allLoad = setTimeout(function (){
 		if(scrollTime){
-			var newLength = document.querySelectorAll("._698").length;
+			var newLength = document.querySelectorAll('._698').length;
 			if(liLength != newLength){
 				liLength = newLength;
 			}else{
@@ -17,20 +17,20 @@ var getScroll = function(){
 		}
 	},1000);
 	if(!scrollTime){
-		var liObj = document.querySelectorAll("._698");
+		var liObj = document.querySelectorAll('._698');
 		for(var i = 0;i < liObj.length; i++){
-			var userName = liObj[i].querySelectorAll("._6a div.fsl a"),			
-			userFriend = liObj[i].querySelectorAll("._6a a._39g5"),			
-			userFriendPicture = liObj[i].querySelectorAll(".clearfix a._5q6s img"),			
-			friendUserId = liObj[i].querySelectorAll(".FriendRequestFriends");
+			var userName = liObj[i].querySelectorAll('._6a div.fsl a'),			
+			userFriend = liObj[i].querySelectorAll('._6a a._39g5'),			
+			userFriendPicture = liObj[i].querySelectorAll('.clearfix a._5q6s img'),			
+			friendUserId = liObj[i].querySelectorAll('.FriendRequestFriends');
 			frienduserIDdone = friendUserId[0].dataset.profileid;
-			userFriendPicture = (userFriendPicture.length > 0) ? userFriendPicture[0].currentSrc : "";
+			userFriendPicture = (userFriendPicture.length > 0) ? userFriendPicture[0].currentSrc : '';
 			var mutualfbfriend = new Array();
 			var userObj = new Object();
 			userObj = {				
 				name :  userName[0].innerHTML,
 				userId: friendUserId[0].dataset.profileid,
-				detail : (userFriend.length > 0) ? userFriend[0].innerHTML : "",
+				detail : (userFriend.length > 0) ? userFriend[0].innerHTML : '',
 				picture : userFriendPicture,
 				mutualFriend : new Array(),
 				url : 'https://www.facebook.com/profile.php?id='+frienduserIDdone+'&sk=friends'
@@ -47,20 +47,20 @@ var getScroll = function(){
 				clearInterval(intervalForMutualFriend);
 				var userFriend = new Object()
 				userFriend = fbFriendLogIn[index];
-				var mutualFriend    = window.open (userFriend.url, "_blank");
+				var mutualFriend    = window.open (userFriend.url, '_blank');
 				mutualFriend.addEventListener (
-					"load",
+					'load',
 					function () {
 						var mutualFriendDom = mutualFriend.document;
 						var intervalForScrollForMutualFriend = '';
-						var liObjForMutualFriend = mutualFriendDom.querySelectorAll("._698");
+						var liObjForMutualFriend = mutualFriendDom.querySelectorAll('._698');
 						var liObjForMutualFriendLength = liObjForMutualFriend.length;
 						var scrollTimeMutualFreind = 1;
 						var getScrollMutualFreind = function(){
 							mutualFriend.scrollTo(0,mutualFriendDom.body.scrollHeight);
 							var allLoadMutualFriend = setTimeout(function (){
 								if(scrollTimeMutualFreind){
-									var newLength = mutualFriendDom.querySelectorAll("._698").length;
+									var newLength = mutualFriendDom.querySelectorAll('._698').length;
 									if(liObjForMutualFriendLength != newLength){
 										liObjForMutualFriendLength = newLength;
 									}else{
@@ -72,26 +72,20 @@ var getScroll = function(){
 								clearTimeout(allLoadMutualFriend);
 								mutualFriendGetObj = mutualFriendDom.querySelectorAll('._698');
 								for(var j = 0;j < mutualFriendGetObj.length; j++){
-									var mutualFriendUserName = mutualFriendGetObj[j].querySelectorAll("._6a div.fsl a"),	
-									mutualuserFriend = mutualFriendGetObj[j].querySelectorAll("._6a a._39g5"),	
-									mutualuserFriendPicture = mutualFriendGetObj[j].querySelectorAll(".clearfix a._5q6s img"),	
-									/* friendUserId = mutualFriendGetObj[j].querySelectorAll(".FriendRequestFriends");	
-									if(!(friendUserId.length > 0)){
-										friendUserId = mutualFriendGetObj[j].querySelectorAll(".FriendRequestOutgoing")
-										console.log(friendUserId);
-									} */
-									mutualuserFriend = (mutualuserFriend.length > 0) ? mutualuserFriend[0].innerHTML : "";	
-									mutualuserFriendPicture = (mutualuserFriendPicture.length > 0) ? mutualuserFriendPicture[0].currentSrc : "";	
+									var mutualFriendUserName = mutualFriendGetObj[j].querySelectorAll('._6a div.fsl a'),	
+									mutualuserFriend = mutualFriendGetObj[j].querySelectorAll('._6a a._39g5'),	
+									mutualuserFriendPicture = mutualFriendGetObj[j].querySelectorAll('.clearfix a._5q6s img'),	
+									
+									mutualuserFriend = (mutualuserFriend.length > 0) ? mutualuserFriend[0].innerHTML : '';	
+									mutualuserFriendPicture = (mutualuserFriendPicture.length > 0) ? mutualuserFriendPicture[0].currentSrc : '';	
 									var userMutual = {
 										name :  mutualFriendUserName[0].innerHTML,
-										//userId : friendUserId[0].dataset.profileid,
 										detail : mutualuserFriend,
 										picture : mutualuserFriendPicture
 									}
 									userFriend.mutualFriend.push(userMutual);
 								}
 								fbFriendLogInUser[index] = userFriend;
-								//fbFriendLogIn[index] = userFriend;
 								clearInterval(intervalForScrollMutualFriend);
 								mutualFriend.close();
 								intervalForMutualFriend = setInterval(getMutualFriend, initial);
@@ -104,7 +98,6 @@ var getScroll = function(){
 				index = index+1;
 			}else{
 				clearInterval(intervalForMutualFriend);
-				//console.log(fbFriendLogInUser);
 				console.log(fbFriendLogIn);
 			}
 			
