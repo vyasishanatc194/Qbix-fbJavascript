@@ -42,8 +42,8 @@ var getScroll = function(){
 		var intervalForMutualFriend = null;
 		var fbFriendLogInUser = new Array();
 		var getMutualFriend = function(){
-			if(index < fbFriendLogIn.length){
-			//if(index < 2){
+			//if(index < fbFriendLogIn.length){
+			if(index < 2){
 				clearInterval(intervalForMutualFriend);
 				var userFriend = new Object()
 				userFriend = fbFriendLogIn[index];
@@ -93,6 +93,7 @@ var getScroll = function(){
 								fbFriendLogInUser[index] = userFriend;
 								//fbFriendLogIn[index] = userFriend;
 								clearInterval(intervalForScrollMutualFriend);
+								mutualFriend.close();
 								intervalForMutualFriend = setInterval(getMutualFriend, initial);
 							}
 						}
