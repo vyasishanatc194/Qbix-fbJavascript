@@ -12,20 +12,47 @@
     </style>
   </head>
   <body>
+    <table>
+      <tr>
+        <td style="margin:10px">
+          <h1>Check Qr Code url</h1>
+          <br />
+          
+          <h2>Upload file</h2>
+          <input type="file" id="upload">
+          
+          <h2>Result</h2>
+          <div id="preview" style="width:100%;height:10px; margin-top:15px;"></div>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <h1>Create Qr Code using url</h1>
+          <br />
+          <br />
+          <input id="text" type="text" value="facebook.com" style="width:50%" />
+          <button id="generate">Generate</button>
+          <br />
+          <div id="qrcode" style="width:100px; height:100px; margin-top:15px;"></div>
+          <a id="qrcodeimages" download="qrcode.jpeg" href="">
+            Download
+          </a>
+        </td>
+      </tr>
+    </table>
     
-    <h1>Check Qr Code url</h1>
     <br />
-    <a href="createqr.html" title="Create qr Code from url"><button> Create QR</button></a>
-
     <br />
-    <h2>Upload file</h2>
-    <input type="file" id="upload">
-
-    <h2>Result</h2>
-    <div id="preview"></div>
+    
+    <!-- <a href="createqr.html" title="Create qr Code from url">
+      <button> Create QR</button>
+    </a> -->
 
     <script type="text/javascript" src="js/index.js"></script>
-
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery.canvasjs.min.js"></script>
+    <script type="text/javascript" src="js/canvasjs.min.js"></script>
+    <script type="text/javascript" src="js/qrcode.js"></script>
     <script type="text/javascript">
       (function() {
         'use strict';
@@ -37,7 +64,7 @@
         qr.callback = function(err, result) {
           var span = document.querySelector('span') || document.createElement('span');
           if(result){
-            span.textContent = result.result;
+            span.innerHTML = '<a href="' + result.result +'" target= "_blank">'+result.result+'</a>';
           }
           else{
             span.textContent = 'Error! See error message in console!';
@@ -59,7 +86,7 @@
             var reader = new FileReader();
             reader.addEventListener('load', function() {
               // Show as preview image
-              var img = document.querySelector('img') || document.createElement('img');
+              var img =  document.createElement('img');
               img.src = this.result;
               preview.appendChild(img);
               // Analyse code
@@ -69,6 +96,52 @@
           }
         }, false);
       })();
+    </script>
+    <script type="text/javascript">
+      var qrcode = new QRCode(document.getElementById("qrcode"), {
+        width: 100,
+        height: 100
+      });
+      var image;
+      function makeCode() {
+        var elText = document.getElementById("text");
+
+        if (!elText.value) {
+          alert("Input a text");
+          elText.focus();
+          return;
+        }
+
+        qrcode.makeCode(elText.value);
+        var canvasImage = document.getElementById("qrcode");
+        convertCanvasToImage(canvasImage)
+
+      }
+
+      // 	// Converts canvas to an image
+      function convertCanvasToImage(canvasImage) {
+
+        var canvas = canvasImage.querySelector('canvas');
+        console.log(canvas);
+        var img = canvas.toDataURL("image/png");
+        var a = document.getElementById('qrcodeimages');
+        a.href = img;
+      }
+
+      makeCode();
+
+      $("#text").
+        on("blur", function () {
+          makeCode();
+        }).
+        on("keydown", function (e) {
+          if (e.keyCode == 13) {
+            makeCode();
+          }
+        });
+      $("#generate").click(function(){
+        makeCode();
+      });
     </script>
   </body>
 </html>
