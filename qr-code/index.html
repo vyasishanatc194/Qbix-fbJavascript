@@ -54,6 +54,9 @@
     <script type="text/javascript" src="js/canvasjs.min.js"></script>
     <script type="text/javascript" src="js/qrcode.js"></script>
     <script type="text/javascript">
+
+
+
       (function() {
         'use strict';
 
@@ -96,8 +99,7 @@
           }
         }, false);
       })();
-    </script>
-    <script type="text/javascript">
+    
       var qrcode = new QRCode(document.getElementById("qrcode"), {
         width: 100,
         height: 100
@@ -113,21 +115,24 @@
         }
 
         qrcode.makeCode(elText.value);
+        // Get Qr code Object
         var canvasImage = document.getElementById("qrcode");
+        //  Call canvas to iamge convert function
         convertCanvasToImage(canvasImage)
 
       }
 
-      // 	// Converts canvas to an image
+      // Converts canvas to an image
       function convertCanvasToImage(canvasImage) {
-
+        // find in Qr code Object canvas tag
         var canvas = canvasImage.querySelector('canvas');
-        console.log(canvas);
+        //  get todataUrl
         var img = canvas.toDataURL("image/png");
+        // get a object and set image url in href for download qr code as image
         var a = document.getElementById('qrcodeimages');
         a.href = img;
       }
-
+      // initialise function for create qr code
       makeCode();
 
       $("#text").
@@ -139,6 +144,7 @@
             makeCode();
           }
         });
+      //initialise create qr code on click event
       $("#generate").click(function(){
         makeCode();
       });
