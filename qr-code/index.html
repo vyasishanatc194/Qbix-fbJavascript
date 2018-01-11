@@ -89,8 +89,13 @@
             var reader = new FileReader();
             reader.addEventListener('load', function() {
               // Show as preview image
+              var elem = document.getElementById('qrfromurl');
+              if (typeof elem !== 'undefined' && elem !== null) {
+                elem.remove();
+              }
               var img =  document.createElement('img');
               img.src = this.result;
+              img.id = 'qrfromurl';
               preview.appendChild(img);
               // Analyse code
               qr.decode(this.result);
