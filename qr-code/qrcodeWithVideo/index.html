@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>QR Test</title>
+  <style>
+    #preview img {
+      border: 1px solid black;
+      float: left;
+      margin: 0 1em 1em 0;
+      width: 10em;
+    }
+
+    table {
+      width: 50%
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <table>
+    <tr>
+      <td style="margin:10px">
+        <h1>Check Qr Code url</h1>
+        <br />
+
+        <h2>Upload file</h2>
+        <input type="file" id="upload">
+        <button id="createqr">Create Qr</button>
+
+        <h2>Result</h2>
+        <div id="preview" style="width:100%;height:10px; margin-top:15px;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <h1>Create Qr Code using url</h1>
+        <br />
+        <br />
+        <input id="text" type="text" value="facebook.com" style="width:50%" />
+        <button id="generate">Generate</button>
+        <br />
+        <div id="qrcode" style="width:100px; height:100px; margin-top:15px;"></div>
+        <a id="qrcodeimages" download="qrcode.jpeg" href="">
+          Download
+        </a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <h1>Scan QR code</h1>
+        <br />
+        <button id="startScanning">Start</button>
+        <button id="stopScanning" style="display:none">Stop</button>
+        <br />
+        <div id="app" style="display:none">
+          <div class="preview-container">
+            <video id="previewVideo"></video>
+          </div>
+          <div class="sidebar">
+            <section class="cameras">
+              <h2>Cameras</h2>
+              <ul>
+                <li v-if="cameras.length === 0" class="empty">No cameras found</li>
+                <li v-for="camera in cameras">
+                  <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{{ formatName(camera.name) }}</span>
+                  <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                    <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+                  </span>
+                </li>
+              </ul>
+            </section>
+            <section class="scans">
+              <h2>Scans</h2>
+              <ul v-if="scans.length === 0">
+                <li class="empty">No scans yet</li>
+              </ul>
+              <transition-group name="scans" tag="ul">
+                <li v-for="scan in scans" :key="scan.date" :title="scan.content">{{ scan }}</li>
+              </transition-group>
+            </section>
+          </div>
+          
+        </div>
+      </td>
+    </tr>
+
+  </table>
+
+  <br />
+  <br />
+
+  <!-- <a href="createqr.html" title="Create qr Code from url">
+      <button> Create QR</button>
+    </a> -->
+
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/qrcode.js"></script>
+  <script type="text/javascript" src="js/adapter.min.js"></script>
+  <script type="text/javascript" src="js/vue.min.js"></script>
+  <script type="text/javascript" src="js/instascan.min.js"></script>
+  <!-- <script type="text/javascript" src="../app.js"></script> -->
+  <script type="text/javascript">
+    (function () {
+      'use strict';
+
+      var upload = document.getElementById('upload');
+      var createqr = document.getElementById('createqr');
+      var preview = document.getElementById('preview');
+      var qr = new QrCode();
+
+      qr.callback = function (err, result) {
+        var span = document.querySelector('span') || document.createElement('span');
+        if (result) {
+          span.innerHTML = '<a href="' + result.result + '" target= "_blank">' + result.result + '</a>';
+        }
+        else {
+          span.textContent = 'Error! See error message in console!';
+          console.error(err);
+        }
+        preview.appendChild(span);
+      }
+      var generatQrCode = function () {
+        var elemFiles = this.files;
+        if (typeof elemFiles === 'undefined' && elemFiles !== null) {
+          var file = document.getElementById('upload');
+          this.files = file.files
+        }
+        for (var i = 0; i < this.files.length; i++) {
+          var file = this.files[i];
+          var imageType = /^image\//;
+
+          if (!imageType.test(file.type)) {
+            throw new Error('File type not valid');
+          }
+
+          // Read file
+          var reader = new FileReader();
+          reader.addEventListener('load', function () {
+            // Show as preview image
+            var elem = document.getElementById('qrfromurl');
+            if (typeof elem !== 'undefined' && elem !== null) {
+              elem.remove();
+            }
+            var img = document.createElement('img');
+            img.src = this.result;
+            img.id = 'qrfromurl';
+            preview.appendChild(img);
+            // Analyse code
+            qr.decode(this.result);
+          }.bind(reader), false);
+          reader.readAsDataURL(file);
+        }
+      }
+      upload.addEventListener('change', generatQrCode, false);
+      createqr.addEventListener('click', generatQrCode, false);
+    })();
+
+    var qrcode = new QRCode(document.getElementById("qrcode"), {
+      width: 100,
+      height: 100
+    });
+    var image;
+    function makeCode() {
+      var elText = document.getElementById("text");
+
+      if (!elText.value) {
+        alert("Input a text");
+        elText.focus();
+        return;
+      }
+
+      qrcode.makeCode(elText.value);
+      // Get Qr code Object
+      var canvasImage = document.getElementById("qrcode");
+      //  Call canvas to iamge convert function
+      convertCanvasToImage(canvasImage)
+
+    }
+
+    // Converts canvas to an image
+    function convertCanvasToImage(canvasImage) {
+      // find in Qr code Object canvas tag
+      var canvas = canvasImage.querySelector('canvas');
+      //  get todataUrl
+      var img = canvas.toDataURL("image/png");
+      // get a object and set image url in href for download qr code as image
+      var a = document.getElementById('qrcodeimages');
+      a.href = img;
+    }
+    // initialise function for create qr code
+    makeCode();
+
+    $("#text").
+      on("blur", function () {
+        makeCode();
+      }).
+      on("keydown", function (e) {
+        if (e.keyCode == 13) {
+          makeCode();
+        }
+      });
+    //initialise create qr code on click event
+    $("#generate").click(function () {
+      makeCode();
+    });
+
+    var startVideoScanning = document.getElementById('startScanning');
+    var app ='';
+    startVideoScanning.onclick = function () {
+      document.getElementById('app').style.display = 'block';
+       app = new Vue({
+        el: '#app',
+        data: {
+          scanner: null,
+          activeCameraId: null,
+          cameras: [],
+          scans: []
+        },
+        mounted: function () {
+          var self = this;
+          self.scanner = new Instascan.Scanner({ video: document.getElementById('previewVideo'), scanPeriod: 5 });
+          self.scanner.addListener('scan', function (content, image) {
+            self.scans.unshift({ date: +(Date.now()), content: content });
+          });
+          Instascan.Camera.getCameras().then(function (cameras) {
+            self.cameras = cameras;
+            if (cameras.length > 0) {
+              self.activeCameraId = cameras[0].id;
+              self.scanner.start(cameras[0]);
+            } else {
+              console.error('No cameras found.');
+            }
+          }).catch(function (e) {
+            console.error(e);
+          });
+        },
+        methods: {
+          formatName: function (name) {
+            return name || '(unknown)';
+          },
+          selectCamera: function (camera) {
+            this.activeCameraId = camera.id;
+            this.scanner.start(camera);
+          }
+        }
+      });
+      document.getElementById('stopScanning').style.display = 'block';
+      startVideoScanning.style.display = 'none';
+      return false;
+
+    }
+    document.getElementById('stopScanning').onclick = function () {
+      app.scanner.stop();
+      document.getElementById('stopScanning').style.display = 'none';
+      document.getElementById('app').style.display = 'none';
+      startVideoScanning.style.display = 'block';
+      return false;
+    }
+  </script>
+
+</body>
+
+</html>
