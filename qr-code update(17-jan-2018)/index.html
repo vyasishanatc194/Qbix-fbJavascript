@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>QR Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    #preview img {
+      border: 1px solid black;
+      float: left;
+      margin: 0 1em 1em 0;
+      width: 10em;
+    }
+
+    table {
+      width: 50%
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <div class="container">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="scan-tab" data-toggle="tab" href="#scan" role="tab" aria-controls="scan" aria-selected="true">Scan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="upload-tab" data-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="false">Upload</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="generate-tab" data-toggle="tab" href="#generate" role="tab" aria-controls="generate" aria-selected="false">Generate</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="scan" role="tabpanel" aria-labelledby="scan-tab">
+        <!-- <audio id="audio" autoplay controls>
+          <source src="audio_file.mp3" type="audio/mpeg">
+           You browser doesn't support the HTML5 audio tag!
+        </audio> -->
+        <audio id="denied" autobuffer preload="auto" controls>
+          <source src="audio_file.mp3" />
+        </audio>
+        <h1>Scan QR code</h1>
+        <br />
+        <button class="btn btn-success" id="startScanning">Start</button>
+        <button id="stopScanning" class="btn btn-danger" style="display:none">Stop</button>
+        <br />
+        <div id="app" style="display:none">
+          <div class="container">
+            <div class="preview-container">
+              <video id="previewVideo"></video>
+            </div>
+          </div>
+          <div class="container-fluid cameramenu">
+            <h2>Cameras</h2>
+            <ul class="list-group cameras">
+              <li v-if="cameras.length === 0" class="empty list-group-item">No cameras found</li>
+              <li v-for="camera in cameras" class="list-group-item">
+                <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{{ formatName(camera.name) }}</span>
+                <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                  <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div class="container cameramenu scans">
+            <h2>Scans</h2>
+            <ul v-if="scans.length === 0" class="list-group">
+              <li class="list-group-item empty">No scans yet</li>
+            </ul>
+            <transition-group name="scans" tag="ul" class="list-group">
+              <li class="list-group-item" v-for="scan in scans" :key="scan.date" :title="scan.content">{{ scan }}</li>
+            </transition-group>
+          </div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+        <h1>Check Qr Code url</h1>
+        <br />
+        <div class="form-group">
+          <label for="uploadQRcode">
+            <h2>Upload file</h2>
+          </label>
+          <input type="file" class="form-control-file" id="uploadQRcode">
+        </div>
+        <!-- <input type="file" id="uploadQRcode"> -->
+        <button class="btn btn-primary" id="createqr">Check Qr</button>
+
+        <h2>Result</h2>
+        <div id="preview" style="width:100%;height:10px; margin-top:15px;"></div>
+      </div>
+      <div class="tab-pane fade" id="generate" role="tabpanel" aria-labelledby="generate-tab">
+        <h1>Create Qr Code using url</h1>
+        <br />
+        <br />
+        <div class="form-group  mb-2">
+          <label for="inputPassword2" class="sr-only">Enter Url</label>
+          <input class="form-control form-control-lg" id="text" value="https://www.facebook.com" type="text" placeholder=".form-control-lg">
+
+        </div>
+        <div class="form-group  mb-2">
+          <button onclick="createQR();" class="btn btn-primary  mb-2">Generate</button>
+        </div>
+        <div id="qrcode" style=" margin:15px 0;"></div>
+        <a id="qrcodeimages" download="qrcode.png" href="">
+          Download
+        </a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- <a href="createqr.html" title="Create qr Code from url">
+      <button> Create QR</button>
+    </a> -->
+
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/VanillaQR.js"></script>
+  <script type="text/javascript" src="js/adapter.min.js"></script>
+  <script type="text/javascript" src="js/vue.min.js"></script>
+  <script type="text/javascript" src="js/instascan.min.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.min.css" >
+  <script src="js/popper.min.js" ></script>
+  <script src="js/bootstrap.min.js"></script>
+  <!-- <script type="text/javascript" src="../app.js"></script> -->
+  <script type="text/javascript">
+    function ValidURL(str) {
+      var regex = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/;
+      if (!regex.test(str)) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+    (function () {
+      'use strict';
+
+      var upload = document.getElementById('uploadQRcode');
+      var createqr = document.getElementById('createqr');
+      var preview = document.getElementById('preview');
+      var qr = new QrCode();
+
+      qr.callback = function (err, successfull) {
+        var elemspan = document.getElementById('qrfromurlspan');
+        if (typeof elemspan !== 'undefined' && elemspan !== null) {
+          elemspan.remove();
+        }
+        var span = document.createElement('span');
+        span.id = 'qrfromurlspan';
+        if (successfull) {
+          var data = successfull.result;
+          var checkUrl = ValidURL(data);
+          if (checkUrl) {
+            window.open(data, '_blank');
+            span.innerHTML = '<a href="' + data + '" target= "_blank">' + data + '</a>';
+          } else {
+            var formData = JSON.parse(data);
+            console.log(formData.method);
+          }
+
+        }
+        else {
+          span.textContent = 'Error! See error message in console!';
+          console.error(err);
+        }
+        preview.appendChild(span);
+      }
+      var generatQrCode = function () {
+        var elemFiles = this.files;
+        if (typeof elemFiles === 'undefined' && elemFiles !== null) {
+          var file = document.getElementById('uploadQRcode');
+          this.files = file.files
+        }
+        for (var i = 0; i < this.files.length; i++) {
+          var file = this.files[i];
+          var imageType = /^image\//;
+
+          if (!imageType.test(file.type)) {
+            throw new Error('File type not valid');
+          }
+
+          // Read file
+          var reader = new FileReader();
+          reader.addEventListener('load', function () {
+            // Show as preview image
+            var elem = document.getElementById('qrfromurl');
+            if (typeof elem !== 'undefined' && elem !== null) {
+              elem.remove();
+            }
+            var img = document.createElement('img');
+            img.src = this.result;
+            img.id = 'qrfromurl';
+            preview.appendChild(img);
+            // Analyse code
+            qr.decode(this.result);
+          }.bind(reader), false);
+          reader.readAsDataURL(file);
+
+        }
+        delete this.files;
+      }
+      upload.addEventListener('change', generatQrCode, false);
+      createqr.addEventListener('click', generatQrCode, false);
+      $('#myTab li:first-child a').tab('show')
+    })();
+
+    var qrUrl = document.getElementById("text");
+    var qr = new VanillaQR({
+      url: qrUrl.value,
+      size: 400,
+      colorLight: "#ffffff",
+      colorDark: "#000000"
+
+    });
+    document.getElementById('qrcode').appendChild(qr.domElement);
+    //Create qr controllers
+    function createQR() {
+      qr.url = qrUrl.value;
+      qr.init();
+      convertCanvasToImage()
+    }
+
+    createQR();
+    convertCanvasToImage()
+    // Converts canvas to an image
+    function convertCanvasToImage() {
+      // find in Qr code Object canvas tag
+      var canvasImage = document.getElementById("qrcode");
+      var canvas = canvasImage.querySelector('canvas');
+      //  get todataUrl
+      var img = canvas.toDataURL("image/png");
+      // get a object and set image url in href for download qr code as image
+
+
+      var a = document.getElementById('qrcodeimages');
+      a.href = img;
+    }
+
+
+    $("#text").
+      on("blur", function () {
+        createQR();
+      }).
+      on("keydown", function (e) {
+        if (e.keyCode == 13) {
+          createQR();
+        }
+      });
+
+    var audio = document.getElementById('denied');
+    // var button = document.getElementById('play-button');
+    // button.addEventListener('click', function () {
+    //   audio.play();
+    // });
+    function playAudio() {
+      //alert('here');
+      audio.play();
+    }
+    
+    var startVideoScanning = document.getElementById('startScanning');
+    var app = '';
+    startVideoScanning.onclick = function () {
+      document.getElementById('app').style.display = 'block';
+      app = new Vue({
+        el: '#app',
+        data: {
+          scanner: null,
+          activeCameraId: null,
+          cameras: [],
+          scans: []
+        },
+        mounted: function () {
+          var self = this;
+          self.scanner = new Instascan.Scanner({ video: document.getElementById('previewVideo'), scanPeriod: 5 });
+          self.scanner.addListener('scan', function (content, image) {
+            //audio.play();
+            playAudio();
+            self.scans.unshift({ date: +(Date.now()), content: content });
+          });
+          Instascan.Camera.getCameras().then(function (cameras) {
+            self.cameras = cameras;
+            if (cameras.length > 0) {
+              self.activeCameraId = cameras[0].id;
+              self.scanner.start(cameras[0]);
+            } else {
+              console.error('No cameras found.');
+            }
+          }).catch(function (e) {
+            console.error(e);
+          });
+        },
+        methods: {
+          formatName: function (name) {
+            return name || '(unknown)';
+          },
+          selectCamera: function (camera) {
+            this.activeCameraId = camera.id;
+            this.scanner.start(camera);
+          }
+        }
+      });
+      document.getElementById('stopScanning').style.display = 'block';
+      startVideoScanning.style.display = 'none';
+      return false;
+
+    }
+    document.getElementById('stopScanning').onclick = function () {
+      app.scanner.stop();
+      document.getElementById('stopScanning').style.display = 'none';
+      document.getElementById('app').style.display = 'none';
+      startVideoScanning.style.display = 'block';
+      return false;
+    }
+  </script>
+
+</body>
+
+</html>
