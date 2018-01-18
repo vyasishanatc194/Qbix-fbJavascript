@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>QR Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    #preview img {
+      border: 1px solid black;
+      float: left;
+      margin: 0 1em 1em 0;
+      width: 10em;
+    }
+
+    table {
+      width: 50%
+    }
+
+    #overlay {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      cursor: pointer;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <div id="overlay">
+  </div>
+  <div class="container">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="scan-tab" data-toggle="tab" href="#scan" role="tab" aria-controls="scan" aria-selected="true">Scan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="upload-tab" data-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="false">Upload</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="generate-tab" data-toggle="tab" href="#generate" role="tab" aria-controls="generate" aria-selected="false">Generate</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="scan" role="tabpanel" aria-labelledby="scan-tab">
+        <!-- <audio id="audio" autoplay controls>
+          <source src="audio_file.mp3" type="audio/mpeg">
+           You browser doesn't support the HTML5 audio tag!
+        </audio> -->
+        <audio id="denied" autobuffer preload="auto" controls>
+          <source src="audio_file.mp3" />
+        </audio>
+        <h1>Scan QR code</h1>
+        <br />
+        <button class="btn btn-success" id="startScanning">Start</button>
+        <button id="stopScanning" class="btn btn-danger" style="display:none">Stop</button>
+        <br />
+        <div id="app" style="display:none">
+          <div class="container">
+            <div class="preview-container">
+              <video id="previewVideo"></video>
+            </div>
+          </div>
+          <div class="container-fluid cameramenu">
+            <h2>Cameras</h2>
+            <ul class="list-group cameras">
+              <li v-if="cameras.length === 0" class="empty list-group-item">No cameras found</li>
+              <li v-for="camera in cameras" class="list-group-item">
+                <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{{ formatName(camera.name) }}</span>
+                <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                  <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+                </span>
+              </li>
+            </ul>
+          </div>
+          <div class="container cameramenu scans">
+            <h2>Scans</h2>
+            <ul v-if="scans.length === 0" class="list-group">
+              <li class="list-group-item empty">No scans yet</li>
+            </ul>
+            <transition-group name="scans" tag="ul" class="list-group">
+              <li class="list-group-item" v-for="scan in scans" :key="scan.date" :title="scan.content">{{ scan.content }}</li>
+            </transition-group>
+          </div>
+          <div id="forScan"></div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+        <h1>Check Qr Code url</h1>
+        <br />
+        <div class="form-group">
+          <label for="uploadQRcode">
+            <h2>Upload file</h2>
+          </label>
+          <input type="file" class="form-control-file" id="uploadQRcode">
+        </div>
+        <!-- <input type="file" id="uploadQRcode"> -->
+        <button class="btn btn-primary" id="createqr">Check Qr</button>
+
+        <h2>Result</h2>
+        <div id="preview" style="width:100%;height:10px; margin-top:15px;"></div>
+      </div>
+      <div class="tab-pane fade" id="generate" role="tabpanel" aria-labelledby="generate-tab">
+        <h1>Create Qr Code using url</h1>
+        <br />
+        <br />
+        <ul class="nav nav-tabs" id="myTab2" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="link-tab" data-toggle="tab" href="#link" role="tab" aria-controls="link" aria-selected="true">Go to Link</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="makeRequest-tab" data-toggle="tab" href="#makeRequest" role="tab" aria-controls="makeRequest" aria-selected="false">Make Request</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="bulkQr-tab" data-toggle="tab" href="#bulkQr" role="tab" aria-controls="bulkQr" aria-selected="false">Bulk Qr Code Generate</a>
+          </li>
+        </ul>
+        <div class="tab-content" id="myTab2Content">
+          <div class="tab-pane fade show active" id="link" role="tabpanel" aria-labelledby="link-tab">
+            <br />
+            <br />
+            <br />
+            <div class="form-group  mb-2">
+              <label for="inputPassword2" class="sr-only">Enter Url</label>
+              <input class="form-control form-control-lg" id="text" value="https://www.facebook.com" type="text" >
+            </div>
+            <div class="form-group  mb-2">
+              <button onclick="createQR();" class="btn btn-primary  mb-2">Generate</button>
+            </div>
+            <div id="qrcode" style=" margin:15px 0;"></div>
+            <a id="qrcodeimages" download="qrcode.png" href="">
+              Download
+            </a>
+          </div>
+          <div class="tab-pane fade " id="makeRequest" role="tabpanel" aria-labelledby="makeRequest-tab">
+            <br />
+            <br />
+            <br />
+            make requesxt
+          </div>
+          <div class="tab-pane fade " id="bulkQr" role="tabpanel" aria-labelledby="bulkQr-tab">
+            <br />
+            
+            <div class="form-group">
+              <label for="exampleFormControlTextarea1">Enter Url for Generate qr Code in Bulk</label>
+              <textarea class="form-control" id="bulkUrl" rows="3"></textarea>
+            </div>
+            <div class="form-group ">
+              <button id="generateBulkQr" class="btn btn-primary mb-2">Generate</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- <a href="createqr.html" title="Create qr Code from url">
+      <button> Create QR</button>
+    </a> -->
+
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/VanillaQR.js"></script>
+  <script type="text/javascript" src="js/adapter.min.js"></script>
+  <script type="text/javascript" src="js/vue.min.js"></script>
+  <script type="text/javascript" src="js/instascan.min.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <script src="js/popper.min.js"></script>
+  <script src="js/bootstrap.min.js"></script>
+  <!-- <script type="text/javascript" src="../app.js"></script> -->
+  <script src="js/custom/generate.js"></script>
+  <script src="js/custom/readqr.js"></script>
+  <script src="js/custom/scanqr.js"></script>
+  <script>
+    $("textarea").keyup(function (e) {
+        while ($(this).outerHeight() < this.scrollHeight + parseFloat($(this).css("borderTopWidth")) + parseFloat($(this).css("borderBottomWidth"))) {
+          $(this).height($(this).height() + 1);
+        };
+      });
+      $('#generateBulkQr').click(function(){
+        var bulkUrl = $('#bulkUrl').val()
+        var bulkUrlarray = bulkUrl.split("\n");
+        console.log(bulkUrlarray);
+      });
+  </script>
+</body>
+
+</html>
