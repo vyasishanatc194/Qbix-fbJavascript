@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>QR Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <style>
+    #preview img {
+      border: 1px solid black;
+      float: left;
+      margin: 0 1em 1em 0;
+      width: 10em;
+    }
+
+    table {
+      width: 50%
+    }
+
+    #overlay {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2;
+      cursor: pointer;
+    }
+  </style>
+  <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+  <div id="overlay">
+  </div>
+  <div class="container">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+      <li class="nav-item">
+        <a class="nav-link active" id="scan-tab" data-toggle="tab" href="#scan" role="tab" aria-controls="scan" aria-selected="true">Scan</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="upload-tab" data-toggle="tab" href="#upload" role="tab" aria-controls="upload" aria-selected="false">Upload</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="generate-tab" data-toggle="tab" href="#generate" role="tab" aria-controls="generate" aria-selected="false">Generate</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+      <div class="tab-pane fade show active" id="scan" role="tabpanel" aria-labelledby="scan-tab">
+        <!-- Insta scan for qr Code -->
+        <!-- <audio id="audio" autoplay controls>
+          <source src="audio_file.mp3" type="audio/mpeg">
+           You browser doesn't support the HTML5 audio tag!
+        </audio> -->
+        <!-- Audio for alert when scan gets qr code -->
+        <audio id="denied" autobuffer preload="auto">
+          <source src="audio_file.mp3" />
+        </audio>
+        <h1>Scan QR code</h1>
+        <br />
+        <!-- Start or Stop for scaning Process -->
+        <button class="btn btn-success" id="startScanning">Start</button>
+        <button id="stopScanning" class="btn btn-danger" style="display:none">Stop</button>
+        <br />
+        <!-- Scan camera list and Scan Results -->
+        <div id="app" style="display:none">
+          <div class="container">
+            <div class="preview-container">
+              <video id="previewVideo"></video>
+            </div>
+          </div>
+          <div class="container-fluid cameramenu">
+            <h2>Cameras</h2>
+            <!-- Camera List Start -->
+            <ul class="list-group cameras">
+              <li v-if="cameras.length === 0" class="empty list-group-item">No cameras found</li>
+              <li v-for="camera in cameras" class="list-group-item">
+                <span v-if="camera.id == activeCameraId" :title="formatName(camera.name)" class="active">{{ formatName(camera.name) }}</span>
+                <span v-if="camera.id != activeCameraId" :title="formatName(camera.name)">
+                  <a @click.stop="selectCamera(camera)">{{ formatName(camera.name) }}</a>
+                </span>
+              </li>
+            </ul>
+            <!-- Camera List End -->
+          </div>
+          <div class="container cameramenu scans">
+            <!-- Scan list Start -->
+            <h2>Scans</h2>
+            <ul v-if="scans.length === 0" class="list-group">
+              <li class="list-group-item empty">No scans yet</li>
+            </ul>
+            <transition-group name="scans" tag="ul" class="list-group checkscaned">
+              <li class="list-group-item" v-for="scan in scans" :key="scan.date" :title="scan.content">{{ scan.content }}</li>
+            </transition-group>
+            <!-- Scan List End -->
+          </div>
+          <!-- Append Form here if form is available in qr  -->
+          <div id="forScan"></div>
+        </div>
+      </div>
+      <div class="tab-pane fade" id="upload" role="tabpanel" aria-labelledby="upload-tab">
+        <!-- Read Qr Code -->
+        <h1>Check Qr Code url</h1>
+        <br />
+        <div class="form-group">
+          <label for="uploadQRcode">
+            <h2>Upload file</h2>
+          </label>
+          <input type="file" class="form-control-file" id="uploadQRcode">
+        </div>
+        <!-- <input type="file" id="uploadQRcode"> -->
+        <button class="btn btn-primary" id="createqr">Check Qr</button>
+        <!-- Result Uploaded Qr Code -->
+        <h2>Result</h2>
+        <div id="preview" style="width:100%;height:10px; margin-top:15px;"></div>
+      </div>
+      <div class="tab-pane fade" id="generate" role="tabpanel" aria-labelledby="generate-tab">
+        <!-- Create Qr Code -->
+        <h1>Create Qr Code</h1>
+        <br />
+        <br />
+        <!-- Tabes for Different Options for Create qr -->
+        <ul class="nav nav-tabs" id="myTab2" role="tablist">
+          <li class="nav-item">
+            <a class="nav-link active" id="link-tab" data-toggle="tab" href="#link" role="tab" aria-controls="link" aria-selected="true">Go to Link</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="makeRequest-tab" data-toggle="tab" href="#makeRequest" role="tab" aria-controls="makeRequest" aria-selected="false">Make Request</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="bulkQr-tab" data-toggle="tab" href="#bulkQr" role="tab" aria-controls="bulkQr" aria-selected="false">Bulk Qr Code Generate</a>
+          </li>
+        </ul>
+        <div class="tab-content" id="myTab2Content">
+          <div class="tab-pane fade show active" id="link" role="tabpanel" aria-labelledby="link-tab">
+            <!-- Create qr Code using Url -->
+            <br />
+            <br />
+            <br />
+            <div class="form-group  mb-2">
+              <label for="inputPassword2" class="sr-only">Enter Url</label>
+              <input class="form-control form-control-lg" id="text" value="https://www.facebook.com" type="text" >
+            </div>
+            <div class="form-group  mb-2">
+              <button onclick="createQR();" class="btn btn-primary  mb-2">Generate</button>
+            </div>
+            <div id="qrcode" style=" margin:15px 0;"></div>
+            <a id="qrcodeimages" download="qrcode.png" href="">
+              Download
+            </a>
+          </div>
+          <div class="tab-pane fade " id="makeRequest" role="tabpanel" aria-labelledby="makeRequest-tab">
+            <!-- Make Request for generate qr Code -->
+            <br />
+            
+            <div class="form-group  mb-2">
+              <label for="inputPassword2" class="sr-only">Action</label>
+              <input class="form-control form-control-lg" id="action" value="" placeholder="Enter Your Action Url" type="text">
+            </div>
+
+            <div class="form-group">
+              <label for="getmethod">Method</label>
+              <select class="form-control" name="getmethod" id="getmethod">
+                <option value="get">Get</option>
+                <option value="post">Post</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="enterdetail">Detail</label>
+              <textarea class="form-control" id="enterdetail" rows="3"></textarea>
+            </div>
+
+          </div>
+          <div class="tab-pane fade " id="bulkQr" role="tabpanel" aria-labelledby="bulkQr-tab">
+            <!-- Create Bulk Qr Code using bulk url -->
+            <br />
+            <div class="form-group">
+              <label for="exampleFormControlTextarea1">Enter Url for Generate qr Code in Bulk</label>
+              <textarea class="form-control" id="bulkUrl" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+              <button id="generateBulkQr" class="btn btn-primary mb-2">Generate</button>
+            </div>
+            <div id="getBulkQr"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- <a href="createqr.html" title="Create qr Code from url">
+      <button> Create QR</button>
+    </a> -->
+
+  <script type="text/javascript" src="js/index.js"></script>
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/VanillaQR.js"></script>
+  <script type="text/javascript" src="js/adapter.min.js"></script>
+  <script type="text/javascript" src="js/vue.min.js"></script>
+  <script type="text/javascript" src="js/instascan.min.js"></script>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <script type="text/javascript" src="js/popper.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <!-- <script type="text/javascript" src="../app.js"></script> -->
+  <script type="text/javascript" src="js/custom/generate.js"></script>
+  <script type="text/javascript" src="js/custom/readqr.js"></script>
+  <script type="text/javascript" src="js/custom/scanqr.js"></script>
+  <script type="text/javascript" src="js/jszip.js"></script>
+ <script src="https://stuk.github.io/jszip/vendor/FileSaver.js"></script>
+  <script>
+    $("textarea").keyup(function (e) {
+        while ($(this).outerHeight() < this.scrollHeight + parseFloat($(this).css("borderTopWidth")) + parseFloat($(this).css("borderBottomWidth"))) {
+          $(this).height($(this).height() + 1);
+        };
+      });
+      $('#generateBulkQr').click(function(){
+        var bulkUrl = $('#bulkUrl').val()
+        var bulkUrlarray = bulkUrl.split("\n");
+        var zip = new JSZip();
+        zip.file("qr code.txt", bulkUrlarray);
+        var img1 = zip.folder("images");
+        for (var key in bulkUrlarray) {
+          if(bulkUrlarray[key] != null || bulkUrlarray[key] != '' ){
+            var img =  createBulkQR(bulkUrlarray[key]);
+            img1.file(key+"qr.png", img, { base64: true });
+          }
+        }
+        zip.generateAsync({ type: "blob" })
+          .then(function (content) {
+            // see FileSaver.js
+            saveAs(content, "example.zip");
+          });
+        
+        
+      });
+      //var img = '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kIAEJCCBEQEDZITNhyQgAQlIwABxByQgAQlIYETAABlh8yEJSEACEjBA3AEJSEACEhgRMEBG2HxIAhKQgAQMEHdAAhKQgARGBAyQETYfkoAEJCABA8QdkIAEJCCBEQEDZITNhyQgAQlIwABxByQgAQlIYETAABlh8yEJSEACEjBA3AEJSEACEhgRqAyQUSc+JAEJSEACfz2Bj7+egAAkIAEJSGBEwAAZYfMhCUhAAhIwQNwBCUhAAhIYETBARth8SAISkIAEDBB3QAISkIAERgQMkBE2H5KABCQgAQPEHZCABCQggREBA2SEzYckIAEJSMAAcQckIAEJSGBEwAAZYfMhCUhAAhIwQNwBCUhAAhIYETBARth8SAISkIAEDBB3QAISkIAERgQMkBE2H5KABCQgAQPEHZCABCQggREBA2SEzYckIAEJSMAAcQckIAEJSGBEwAAZYfMhCUhAAhIwQNwBCUhAAhIYETBARth8SAISkIAEDBB3QAISkIAERgQMkBE2H5KABCQgAQPEHZCABCQggREBA2SEzYckIAEJSMAAcQckIAEJSGBEwAAZYfMhCUhAAhIwQNwBCUhAAhIYETBARth8SAISkIAEDBB3QAISkIAERgQMkBE2H5KABCQgAQPEHZCABCQggREBA2SEzYckIAEJSMAAcQckIAEJSGBEwAAZYfMhCUhAAhIwQNwBCUhAAhIYETBARth8SAISkIAE/gcviLIX0rDSrgAAAABJRU5ErkJggg=='
+      // var zip = new JSZip();
+      //   zip.file("qr code.txt", "Hello World\n");
+      //   var img1 = zip.folder("images");
+      //   img1.file("smile.gif", img, { base64: true });
+      //   zip.generateAsync({ type: "blob" })
+      //     .then(function (content) {
+      //       // see FileSaver.js
+      //       saveAs(content, "example.zip");
+      //     });
+      // var zip = new JSZip();
+      //   zip.file("Hello.txt", "Hello World\n");
+      //   zip.generateAsync({ type: "blob" })
+      //     .then(function (content) {
+      //       // see FileSaver.js
+      //       saveAs(content, "file.zip");
+      //     });
+  </script>
+</body>
+
+</html>
